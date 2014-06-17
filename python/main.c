@@ -42,7 +42,7 @@ double min_array(double a[], int num_elements)
 }
 
 int main (int argc, char *argv[]) {
-
+    
 	if (argc < 3) {
 		printf("Description:\n");
 		printf("\n");
