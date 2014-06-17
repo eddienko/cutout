@@ -197,6 +197,25 @@
 		7B02C3E71950725400E67F45 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/include,
+				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				OTHER_LDFLAGS = (
+					"-last",
+					"-last_wcslib",
+					"-last_pal",
+					"-last_grf_2.0",
+					"-last_grf_3.2",
+					"-last_grf_5.6",
+					"-last_grf3d",
+					"-last_pass2",
+					"-last_err",
+					"-lm",
+					"-lcfitsio",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -204,6 +223,25 @@
 		7B02C3E81950725400E67F45 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/include,
+				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				OTHER_LDFLAGS = (
+					"-last",
+					"-last_wcslib",
+					"-last_pal",
+					"-last_grf_2.0",
+					"-last_grf_3.2",
+					"-last_grf_5.6",
+					"-last_grf3d",
+					"-last_pass2",
+					"-last_err",
+					"-lm",
+					"-lcfitsio",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -227,6 +265,7 @@
 				7B02C3E81950725400E67F45 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
