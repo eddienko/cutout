@@ -10,8 +10,19 @@
 #include <string.h>
 #include "fitsio.h"
 #include "ast.h"
+#include "utils.h"
+
+#ifdef USE_OPENMP
+
+#include <omp.h>
+
+#endif
+
+static int debug=1;
 
 int cutout(char *fitsFile, char *hdrFile, char *outFile);
+int cutout_list(char *driveFile) ;
+int copyheaders(fitsfile *infptr, fitsfile *outfptr);
 
 double max_array(double a[], int num_elements)
 {
@@ -43,6 +54,7 @@ double min_array(double a[], int num_elements)
 
 int main (int argc, char *argv[]) {
 
+    
 	if (argc < 3) {
 		printf("Description:\n");
 		printf("\n");
@@ -59,11 +71,75 @@ int main (int argc, char *argv[]) {
 		printf("\n");
 		return(0);
 	}
+    
+
 	
-	cutout(argv[1], argv[2], argv[3]);
+	//cutout(argv[1], argv[2], argv[3]);
+    
+    cutout_list(argv[1]);
     
 	return(1);
 	
+}
+
+struct hdrkey {
+    char keyname[8];
+    int keytype;
+};
+
+int cutout_list(char *driveFile) {
+    int i,j,id,nfiles;
+    FILE *pfile;
+    char fitsFiles[16][80], hdrFiles[16][80], outFiles[16][80], card[256];
+    
+    
+    pfile = fopen(driveFile, "r");
+    i=0;
+    while ( fgets ( card, 256, pfile ) != NULL ) {
+        sscanf(card, "%s %s %s", fitsFiles[i], hdrFiles[i], outFiles[i]);
+        //printf("%s : %s : %s\n", fitsFiles[i], hdrFiles[i], outFiles[i]);
+		//strcpy(fitsFiles[i], card);
+        i++;
+	}
+	fclose(pfile);
+    nfiles=i;
+
+    
+    #ifdef USE_OPENMP
+    
+    if (debug) {
+        printf ( "  C/OpenMP version\n" );
+        printf ( "\n" );
+        printf ( "  Number of processors available = %d\n", omp_get_num_procs ( ) );
+        printf ( "  Number of threads =              %d\n", omp_get_max_threads ( ) );
+        printf ( "\n" );
+    }
+    double wtime;
+    wtime = omp_get_wtime();
+    
+    #endif
+    
+    #ifdef USE_OPENMP
+    # pragma omp parallel shared (fitsFiles, hdrFiles, outFiles, nfiles) private (id)
+    {
+        #pragma omp for schedule(dynamic,1) private (i) nowait
+    #endif
+        for (i=0; i<nfiles; i++) {
+            id = omp_get_thread_num ( );
+            if (debug) printf("  Processor %d  :  %s -> %s\n", id, fitsFiles[i], outFiles[i]);
+            cutout(fitsFiles[i], hdrFiles[i], outFiles[i]);
+        }
+    #ifdef USE_OPENMP
+    }
+    
+    wtime = omp_get_wtime ( ) - wtime;
+    
+    printf ( "\n" );
+    printf ( "  Elapsed wall clock time = %f\n", wtime );
+    
+    #endif
+
+    return(0);
 }
 
 int cutout(char *fitsFile, char *hdrFile, char *outFile) {
@@ -95,13 +171,13 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	double ina[2], inb[2], outa[2], outb[2];
 	double xin[4], yin[4], xout[4], yout[4], sx, sy;
 	
-	printf("%s %s %s", fitsFile, hdrFile, outFile);
-	printf("\n");
+	//printf("%s %s %s", fitsFile, hdrFile, outFile);
+	//printf("\n");
 	
 	status=0;
-	
+
 	/* Open input file for read */
-	if (fits_open_file(&infptr, fitsFile, READONLY, &status)) {
+	if (fits_open_image(&infptr, fitsFile, READONLY, &status)) {
 		fits_report_error(stderr, status);
 		return(status);
 	};
@@ -118,6 +194,13 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	infitschan = astFitsChan( NULL, NULL, "" );
 	astPutCards( infitschan, inheader );
 	
+    /* Free the memory holding the concatenated header cards. */
+	free( inheader );
+    
+    /* Read WCS information from the FitsChan. */
+    //astClear( infitschan, "Card" );
+    inwcsinfo = astRead( infitschan );
+    
 	/* Read astrometry file and create a FitsChan */
 	outfitschan = astFitsChan( NULL, NULL, "" );
 	pfile = fopen(hdrFile, "r");
@@ -128,9 +211,11 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	// Rewind the FitsChan
 	encode = astGetC( outfitschan, "Encoding" );
 	astClear(outfitschan, "Card");
+	outwcsinfo = astRead( outfitschan );
 	
-	/* Free the memory holding the concatenated header cards. */
-	free( inheader );
+    if (outwcsinfo == AST__NULL) {
+        return(-1);
+    }
     
 	/* Read size of output image */
 	astClear(outfitschan, "Card");
@@ -140,11 +225,11 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	astGetFitsI(outfitschan, "NAXIS2", &naxes);
 	naxes_out[1]=naxes;
     
-	/* Read WCS information from the FitsChan. */
-	astClear( infitschan, "Card" );
-	astClear( outfitschan, "Card" );
-	inwcsinfo = astRead( infitschan );
-	outwcsinfo = astRead( outfitschan );
+	
+	
+    
+    
+    
 	//astShow( outfitschan );
 	
 	xin[0] = 1.0;
@@ -284,8 +369,93 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 		fits_report_error(stderr, status);
 		return(status);
 	}
-	astEnd;
+	
+    astEnd;
+    
+    copyheaders(infptr, outfptr);
+    
+    fits_close_file(infptr, &status);
 	fits_close_file(outfptr, &status);
+    if (status) {
+		fits_report_error(stderr, status);
+		return(status);
+	}
+    
+    astFree(inimg);
+    astFree(outimg);
     
 	return(status);
+}
+
+int copyheaders(fitsfile *infptr, fitsfile *outfptr) {
+    
+    int i, nkeys, status=0;
+    float fkeyval;
+    char comment[80], skeyval[80];
+    struct hdrkey key[10];
+    
+    i=0;
+    strcpy(key[i].keyname, "OBJECT");
+    key[i].keytype=TSTRING;
+    
+    i++;
+    strcpy(key[i].keyname, "MJD-OBS");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "UTC");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "LST");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "EXPTIME");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "MAGZPT");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "MAGZRR");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "EXTINCT");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "SEEING");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "ELLIPTIC");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "STDCRMS");
+    key[i].keytype=TFLOAT;
+    
+    i++;
+    strcpy(key[i].keyname, "OBSTATUS");
+    key[i].keytype=TSTRING;
+    
+    nkeys=i;
+    for (i=0; i<=nkeys; i++) {
+        if (key[i].keytype == TFLOAT) {
+            fits_read_key(infptr, key[i].keytype, key[i].keyname, &fkeyval, comment, &status);
+            fits_update_key(outfptr, key[i].keytype, key[i].keyname, &fkeyval, comment, &status);
+        } else if (key[i].keytype == TSTRING) {
+            fits_read_key(infptr, key[i].keytype, key[i].keyname, &skeyval, comment, &status);
+            fits_read_key(outfptr, key[i].keytype, key[i].keyname, skeyval, comment, &status);
+            //if (status) fits_report_error(stderr, status);
+        }
+        status=0;
+    }
+    
+    
+    
+    return(0);
 }
