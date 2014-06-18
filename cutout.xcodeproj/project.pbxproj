@@ -49,6 +49,7 @@
 		7B666BD319508DCA00091556 /* cutout.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = cutout.py; sourceTree = "<group>"; };
 		7B666BD719509EE200091556 /* utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = utils.c; sourceTree = "<group>"; };
 		7B666BD919509F1200091556 /* utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = utils.h; sourceTree = "<group>"; };
+		7BAAE6AF1951E0F100DCF4F7 /* main.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +95,7 @@
 				7B666BD719509EE200091556 /* utils.c */,
 				7B666BD919509F1200091556 /* utils.h */,
 				7B02C3E21950725400E67F45 /* cutout.1 */,
+				7BAAE6AF1951E0F100DCF4F7 /* main.h */,
 			);
 			path = cutout;
 			sourceTree = "<group>";

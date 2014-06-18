@@ -12,6 +12,8 @@
 #include "ast.h"
 #include "utils.h"
 
+#include "main.h"
+
 #ifdef USE_OPENMP
 
 #include <omp.h>
@@ -55,37 +57,35 @@ double min_array(double a[], int num_elements)
 int main (int argc, char *argv[]) {
 
     
-	if (argc < 3) {
-		printf("Description:\n");
+	if ((argc != 2) && (argc != 4)) {
+		printf("Description: \n");
 		printf("\n");
-		printf("    Extracts a cutout from an image based on a suplied header \n");
+		printf("    Extracts a cutout from an image or list of images based on a suplied header \n");
 		printf("\n");
 		printf("Usage:\n");
 		printf("\n");
-		printf("    remap image.fit stamp.hdr stamp.fit \n");
+		printf("    cutout image.fit stamp.hdr stamp.fit \n\n");
+        printf("    cutout driverlist\n");
 		printf("\n");
 		printf("Where:\n\n");
 		printf("  image.fit is the input image to extract the stamp from\n");
 		printf("  stamp.hdr is the header containing the WCS of the required cutout\n");
 		printf("  stamp.fit is the output cutout\n");
 		printf("\n");
+        printf("  driverlist is a text file containing in each line the inputs as above.\n\n");
 		return(0);
 	}
     
 
-	
-	//cutout(argv[1], argv[2], argv[3]);
+    if (argc == 4) {
+        cutout(argv[1], argv[2], argv[3]);
+    } else {
+        cutout_list(argv[1]);
+    }
     
-    cutout_list(argv[1]);
-    
-	return(1);
+	return(0);
 	
 }
-
-struct hdrkey {
-    char keyname[8];
-    int keytype;
-};
 
 int cutout_list(char *driveFile) {
     int i,j,id,nfiles;
@@ -224,11 +224,6 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	astClear(outfitschan, "Card");
 	astGetFitsI(outfitschan, "NAXIS2", &naxes);
 	naxes_out[1]=naxes;
-    
-	
-	
-    
-    
     
 	//astShow( outfitschan );
 	
@@ -374,6 +369,8 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
     
     copyheaders(infptr, outfptr);
     
+    fits_update_key(outfptr, TSTRING, "PROV", fitsFile, "Originating file", &status);
+    
     fits_close_file(infptr, &status);
 	fits_close_file(outfptr, &status);
     if (status) {
@@ -392,65 +389,20 @@ int copyheaders(fitsfile *infptr, fitsfile *outfptr) {
     int i, nkeys, status=0;
     float fkeyval;
     char comment[80], skeyval[80];
-    struct hdrkey key[10];
     
-    i=0;
-    strcpy(key[i].keyname, "OBJECT");
-    key[i].keytype=TSTRING;
-    
-    i++;
-    strcpy(key[i].keyname, "MJD-OBS");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "UTC");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "LST");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "EXPTIME");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "MAGZPT");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "MAGZRR");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "EXTINCT");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "SEEING");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "ELLIPTIC");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "STDCRMS");
-    key[i].keytype=TFLOAT;
-    
-    i++;
-    strcpy(key[i].keyname, "OBSTATUS");
-    key[i].keytype=TSTRING;
-    
-    nkeys=i;
+    nkeys=100;
     for (i=0; i<=nkeys; i++) {
-        if (key[i].keytype == TFLOAT) {
-            fits_read_key(infptr, key[i].keytype, key[i].keyname, &fkeyval, comment, &status);
-            fits_update_key(outfptr, key[i].keytype, key[i].keyname, &fkeyval, comment, &status);
-        } else if (key[i].keytype == TSTRING) {
-            fits_read_key(infptr, key[i].keytype, key[i].keyname, &skeyval, comment, &status);
-            fits_read_key(outfptr, key[i].keytype, key[i].keyname, skeyval, comment, &status);
-            //if (status) fits_report_error(stderr, status);
+        if (updateKeys[i].keytype == 0) break;
+        if (updateKeys[i].keytype == TFLOAT) {
+            fits_read_key(infptr, updateKeys[i].keytype, updateKeys[i].keyname, &fkeyval, comment, &status);
+            fits_update_key(outfptr, updateKeys[i].keytype, updateKeys[i].keyname, &fkeyval, comment, &status);
+            if (strncmp(updateKeys[i].keyname, updateKeys[i].keytrans, 60) != 0)
+                fits_update_key(outfptr, updateKeys[i].keytype, updateKeys[i].keytrans, &fkeyval, comment, &status);
+        } else if (updateKeys[i].keytype == TSTRING) {
+            fits_read_key(infptr, updateKeys[i].keytype, updateKeys[i].keyname, &skeyval, comment, &status);
+            fits_update_key(outfptr, updateKeys[i].keytype, updateKeys[i].keyname, skeyval, comment, &status);
+            if (strncmp(updateKeys[i].keyname, updateKeys[i].keytrans, 60) != 0)
+                fits_update_key(outfptr, updateKeys[i].keytype, updateKeys[i].keytrans, skeyval, comment, &status);
         }
         status=0;
     }
