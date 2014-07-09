@@ -90,7 +90,7 @@ int main (int argc, char *argv[]) {
 int cutout_list(char *driveFile) {
     int i,j,id,nfiles;
     FILE *pfile;
-    char fitsFiles[16][80], hdrFiles[16][80], outFiles[16][80], card[256];
+    char fitsFiles[200][80], hdrFiles[200][80], outFiles[200][80], card[256];
     
     
     pfile = fopen(driveFile, "r");
@@ -344,7 +344,7 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	ubnd[0]=naxes_out[0];
 	ubnd[1]=naxes_out[1];
 	
-	res = astResampleF(cvt, 2, lbnd_in, ubnd_in, inimg, NULL, AST__NEAREST, NULL, NULL, 0, 0, 500, 0.0, 2, lbnd_out, ubnd_out, lbnd, ubnd, outimg, NULL);
+	res = astResampleF(cvt, 2, lbnd_in, ubnd_in, inimg, NULL, AST__LINEAR, NULL, NULL, 0, 0, 500, AST__BAD, 2, lbnd_out, ubnd_out, lbnd, ubnd, outimg, NULL);
 	
 	fits_create_file(&outfptr, outFile, &status);
 	fits_create_img(outfptr, -32, 2, naxes_out, &status);
