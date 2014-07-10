@@ -152,7 +152,7 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	fitsfile *infptr, *outfptr;
 	char *inheader;
 	char *options;
-	int nkeys, naxis, status=0;
+	int nkeys, naxis, hdutype, status=0;
 	long naxes_in[2] = {0,0}, naxes_out[2]={0,0}, totpix, fpixel[2], lpixel[2], inc[2];
 	float *inimg, *outimg, *insubimg = NULL;
 	int naxes;
@@ -369,6 +369,10 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
     
     copyheaders(infptr, outfptr);
     
+    fits_movabs_hdu(infptr, 1, &hdutype, &status);
+    
+    copyheaders(infptr, outfptr);
+    
     fits_update_key(outfptr, TSTRING, "PROV", fitsFile, "Originating file", &status);
     
     fits_close_file(infptr, &status);
@@ -401,6 +405,7 @@ int copyheaders(fitsfile *infptr, fitsfile *outfptr) {
         } else if (updateKeys[i].keytype == TSTRING) {
             fits_read_key(infptr, updateKeys[i].keytype, updateKeys[i].keyname, &skeyval, comment, &status);
             fits_update_key(outfptr, updateKeys[i].keytype, updateKeys[i].keyname, skeyval, comment, &status);
+            //printf("%s %s\n", updateKeys[i].keyname, skeyval);
             if (strncmp(updateKeys[i].keyname, updateKeys[i].keytrans, 60) != 0)
                 fits_update_key(outfptr, updateKeys[i].keytype, updateKeys[i].keytrans, skeyval, comment, &status);
         }

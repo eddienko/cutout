@@ -284,7 +284,6 @@
 				);
 				OTHER_LDFLAGS = (
 					"-last",
-					"-last_wcslib",
 					"-last_pal",
 					"-last_grf_2.0",
 					"-last_grf_3.2",
@@ -318,7 +317,6 @@
 				);
 				OTHER_LDFLAGS = (
 					"-last",
-					"-last_wcslib",
 					"-last_pal",
 					"-last_grf_2.0",
 					"-last_grf_3.2",
@@ -352,7 +350,6 @@
 				OTHER_LDFLAGS = (
 					"-lcfitsio",
 					"-last",
-					"-last_wcslib",
 					"-last_pal",
 					"-last_grf_2.0",
 					"-last_grf_3.2",
@@ -382,7 +379,6 @@
 				OTHER_LDFLAGS = (
 					"-lcfitsio",
 					"-last",
-					"-last_wcslib",
 					"-last_pal",
 					"-last_grf_2.0",
 					"-last_grf_3.2",
