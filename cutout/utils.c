@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 char *
 str_replace ( const char *string, const char *substr, const char *replacement ){
