@@ -35,6 +35,20 @@ struct headerKeys updateKeys[100] = {
     {"STDCRMS", "STDCRMS", TFLOAT},
     {"OBSTATUS", "OBSTATUS", TSTRING},
     {"ESOGRADE", "ESOGRADE", TSTRING},
+    {"APCORPK", "APCORPK", TFLOAT},
+    {"APCOR1", "APCOR1", TFLOAT},
+    {"APCOR2", "APCOR2", TFLOAT},
+    {"APCOR3", "APCOR3", TFLOAT},
+    {"APCOR4", "APCOR4", TFLOAT},
+    {"APCOR5", "APCOR5", TFLOAT},
+    {"APCOR6", "APCOR6", TFLOAT},
+    {"APCOR7", "APCOR7", TFLOAT},
+    {"MAGZPT", "MAGZPT", TFLOAT},
+    {"MAGZRR", "MAGZRR", TFLOAT},
+    {"NUMZPT", "NUMZPT", TFLOAT},
+    {"EXTINCT", "EXTINCT", TFLOAT},
+    {"STDCRMS", "STDCRMS", TFLOAT},
+    {"NUMBRMS", "NUMBRMS", TFLOAT},
     {"", "", 0}
 };
 

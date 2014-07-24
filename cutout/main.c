@@ -150,12 +150,13 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	FILE *pfile;
 	long fsize;
 	char card[FLEN_CARD];
+    char *fitsFileCat;
 	
 	/* CFITSIO */
 	fitsfile *infptr, *outfptr;
 	char *inheader;
 	char *options;
-	int nkeys, naxis, hdutype, status=0;
+	int nkeys, naxis, hdutype, hdunum, status=0;
 	long naxes_in[2] = {0,0}, naxes_out[2]={0,0}, totpix, fpixel[2], lpixel[2], inc[2];
 	float *inimg, *outimg, *insubimg = NULL;
 	int naxes;
@@ -178,6 +179,8 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	//printf("\n");
 	
 	status=0;
+    
+    
 
 	/* Open input file for read */
 	if (fits_open_image(&infptr, fitsFile, READONLY, &status)) {
@@ -370,15 +373,28 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	
     astEnd;
     
+    // Copy headers from input fits
+    fits_get_hdu_num(infptr,  &hdunum);
     copyheaders(infptr, outfptr);
-    
     fits_movabs_hdu(infptr, 1, &hdutype, &status);
-    
     copyheaders(infptr, outfptr);
+    fits_close_file(infptr, &status);
+    
+    // Copy headers from catalogue if present
+    fitsFileCat = str_replace(fitsFile, ".fit", "_cat.fits");
+    if (fits_open_image(&infptr, fitsFileCat, READONLY, &status)) {
+        status=0;
+    } else {
+        
+        fits_movabs_hdu(infptr, hdunum, &hdutype, &status);
+        copyheaders(infptr, outfptr);
+        fits_close_file(infptr, &status);
+    }
+    
     
     fits_update_key(outfptr, TSTRING, "PROV", fitsFile, "Originating file", &status);
     
-    fits_close_file(infptr, &status);
+    
 	fits_close_file(outfptr, &status);
     if (status) {
 		fits_report_error(stderr, status);
