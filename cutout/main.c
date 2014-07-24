@@ -125,7 +125,10 @@ int cutout_list(char *driveFile) {
         #pragma omp for schedule(dynamic,1) private (i) nowait
     #endif
         for (i=0; i<nfiles; i++) {
+            id = 0;
+            #ifdef USE_OPENMP
             id = omp_get_thread_num ( );
+            #endif
             if (debug) printf("  Processor %d  :  %s -> %s\n", id, fitsFiles[i], outFiles[i]);
             cutout(fitsFiles[i], hdrFiles[i], outFiles[i]);
         }

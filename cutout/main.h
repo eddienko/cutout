@@ -25,6 +25,7 @@ struct headerKeys updateKeys[100] = {
     {"ESO TEL AIRM START", "AMSTART", TFLOAT},
     {"ESO TEL AIRM END", "AMEND", TFLOAT},
     {"MJD-OBS", "MJD-OBS", TFLOAT},
+    {"DATE-OBS", "DATE-OBS", TSTRING},
     {"UTC", "UTC", TFLOAT},
     {"LST", "LST", TFLOAT},
     {"EXPTIME", "EXPTIME", TFLOAT},
