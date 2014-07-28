@@ -120,20 +120,17 @@ int cutout_list(char *driveFile) {
     #endif
     
     #ifdef USE_OPENMP
-    # pragma omp parallel shared (fitsFiles, hdrFiles, outFiles, nfiles) private (id)
-    {
-        #pragma omp for schedule(dynamic,1) private (i) nowait
+    # pragma omp parallel for default(shared) private(id)
     #endif
         for (i=0; i<nfiles; i++) {
             id = 0;
             #ifdef USE_OPENMP
             id = omp_get_thread_num ( );
             #endif
-            if (debug) printf("  Processor %d  :  %s -> %s\n", id, fitsFiles[i], outFiles[i]);
+            if (debug) printf("  Processor %d :  %s -> %s\n", id, fitsFiles[i], outFiles[i]);
             cutout(fitsFiles[i], hdrFiles[i], outFiles[i]);
         }
     #ifdef USE_OPENMP
-    }
     
     wtime = omp_get_wtime ( ) - wtime;
     
@@ -146,6 +143,7 @@ int cutout_list(char *driveFile) {
 }
 
 int cutout(char *fitsFile, char *hdrFile, char *outFile) {
+    int id, ii;
 	long i,j,k,l;
 	FILE *pfile;
 	long fsize;
@@ -162,7 +160,7 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	int naxes;
 	
 	/* AST */
-	AstFitsChan *infitschan, *outfitschan, *outfitschan0;
+	AstFitsChan *infitschan, *infitschan2, *outfitschan, *outfitschan0;
 	AstFrameSet *inwcsinfo, *outwcsinfo, *cvt, *cvt2;
 	AstFrameSet *frameseta, *framesetb;
 	AstWinMap *winmap;
@@ -175,38 +173,46 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	double ina[2], inb[2], outa[2], outb[2];
 	double xin[4], yin[4], xout[4], yout[4], sx, sy;
 	
-	//printf("%s %s %s", fitsFile, hdrFile, outFile);
-	//printf("\n");
-	
 	status=0;
-    
-    
 
+    astBegin;
+    
 	/* Open input file for read */
 	if (fits_open_image(&infptr, fitsFile, READONLY, &status)) {
 		fits_report_error(stderr, status);
 		return(status);
 	};
 	
-	/* Obtain all cards in input header and concatenate them */
-	if( fits_hdr2str( infptr, 0, NULL, 0, &inheader, &nkeys, &status ) ) {
-		fits_report_error(stderr, status);
-		return(status);
-	}
-    
-	astBegin;
-	
-	/* Create a FitsChan and fill it with FITS header cards. */
+    /* Initialize fitsChan */
 	infitschan = astFitsChan( NULL, NULL, "" );
-	astPutCards( infitschan, inheader );
-	
-    /* Free the memory holding the concatenated header cards. */
-	free( inheader );
+    
+    /* Read header and add only those WCS related */
+    fits_get_hdrspace(infptr, &nkeys, NULL, &status);
+	for (ii = 1; ii <= nkeys; ii++)  { 
+          fits_read_record(infptr, ii, card, &status); /* read keyword */
+		  if (strstr(card, "CD") != NULL)
+			  astPutFits(infitschan, card, 0);
+		  else if (strstr(card, "CR") != NULL)
+			  astPutFits(infitschan, card, 0);
+		  else if (strstr(card, "CTYPE") != NULL)
+			  astPutFits(infitschan, card, 0);
+		  else if (strstr(card, "PV") != NULL)
+			  astPutFits(infitschan, card, 0);
+		  else if (strstr(card, "NAX") != NULL)
+			  astPutFits(infitschan, card, 0);
+		  else if (strstr(card, "WCS") != NULL)
+			  astPutFits(infitschan, card, 0);
+		  else if (strstr(card, "PC") != NULL)
+			  astPutFits(infitschan, card, 0);
+		  else if (strstr(card, "PR") != NULL)
+			  astPutFits(infitschan, card, 0);
+	  }
     
     /* Read WCS information from the FitsChan. */
-    //astClear( infitschan, "Card" );
+    astClear( infitschan, "Card" );
     inwcsinfo = astRead( infitschan );
     
+
 	/* Read astrometry file and create a FitsChan */
 	outfitschan = astFitsChan( NULL, NULL, "" );
 	pfile = fopen(hdrFile, "r");
@@ -246,12 +252,16 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	//printf("%f %f %f %f -- %f %f\n", xin[0], xin[1], xin[2], xin[3], min_array(xin, 4), max_array(xin, 4));
 	//printf("%f %f %f %f -- %f %f\n", yin[0], yin[1], yin[2], yin[3], min_array(yin, 4), max_array(yin, 4));
 	
+    
+
 	
 	frameseta = astCopy(inwcsinfo);
 	framesetb = astCopy(outwcsinfo);
 	
+
 	astInvert(frameseta);
 	astInvert(framesetb);
+    
     
 	cvt = astConvert(frameseta, framesetb, "SKY,PIXEL,GRID");
 	if ( cvt == AST__NULL ) {
@@ -370,9 +380,7 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 		fits_report_error(stderr, status);
 		return(status);
 	}
-	
-    astEnd;
-    
+	   
     // Copy headers from input fits
     fits_get_hdu_num(infptr,  &hdunum);
     copyheaders(infptr, outfptr);
@@ -403,6 +411,8 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
     
     astFree(inimg);
     astFree(outimg);
+    
+    astEnd;
     
 	return(status);
 }
