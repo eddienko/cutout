@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "fitsio.h"
 #include "ast.h"
 #include "utils.h"
@@ -25,6 +26,7 @@ static int debug=1;
 int cutout(char *fitsFile, char *hdrFile, char *outFile);
 int cutout_list(char *driveFile) ;
 int copyheaders(fitsfile *infptr, fitsfile *outfptr);
+void usage();
 
 double max_array(double a[], int num_elements)
 {
@@ -54,33 +56,56 @@ double min_array(double a[], int num_elements)
     return(min);
 }
 
+void usage()
+{
+    printf("Description: \n");
+    printf("\n");
+    printf("    Extracts a cutout from an image or list of images based on a suplied header \n");
+    printf("\n");
+    printf("Usage:\n");
+    printf("\n");
+    printf("    cutout image.fit stamp.hdr stamp.fit \n\n");
+    printf("    cutout driverlist\n");
+    printf("\n");
+    printf("Where:\n\n");
+    printf("  image.fit is the input image to extract the stamp from\n");
+    printf("  stamp.hdr is the header containing the WCS of the required cutout\n");
+    printf("  stamp.fit is the output cutout\n");
+    printf("\n");
+    printf("  driverlist is a text file containing in each line the inputs as above.\n\n");
+    exit(0);
+}
+
+
 int main (int argc, char *argv[]) {
 
+    int c, numberInputs;
     
-	if ((argc != 2) && (argc != 4)) {
-		printf("Description: \n");
-		printf("\n");
-		printf("    Extracts a cutout from an image or list of images based on a suplied header \n");
-		printf("\n");
-		printf("Usage:\n");
-		printf("\n");
-		printf("    cutout image.fit stamp.hdr stamp.fit \n\n");
-        printf("    cutout driverlist\n");
-		printf("\n");
-		printf("Where:\n\n");
-		printf("  image.fit is the input image to extract the stamp from\n");
-		printf("  stamp.hdr is the header containing the WCS of the required cutout\n");
-		printf("  stamp.fit is the output cutout\n");
-		printf("\n");
-        printf("  driverlist is a text file containing in each line the inputs as above.\n\n");
-		return(0);
+    while ((c = getopt (argc, argv, "hv")) != -1)
+    switch(c) {
+        case 'h': // print out example header
+            exit(0);
+        case 'v':
+            break;
+        default:
+            usage();
+    }
+    
+    if (argv[optind] == NULL) usage();
+    
+    numberInputs = argc - optind;
+    
+    //printf(">>>>> %d\n", numberInputs);
+    
+	if ((numberInputs != 1) && (numberInputs != 3)) {
+        usage();
 	}
     
 
-    if (argc == 4) {
-        cutout(argv[1], argv[2], argv[3]);
+    if (numberInputs == 3) {
+        cutout(argv[optind], argv[optind+1], argv[optind+2]);
     } else {
-        cutout_list(argv[1]);
+        cutout_list(argv[optind]);
     }
     
 	return(0);
@@ -93,7 +118,11 @@ int cutout_list(char *driveFile) {
     char fitsFiles[200][80], hdrFiles[200][80], outFiles[200][80], card[256];
     
     
-    pfile = fopen(driveFile, "r");
+    if (!(pfile = fopen(driveFile, "r"))) {
+        printf("ERROR: File does not exist (%s)\n", driveFile);
+        return 1;
+    }
+    
     i=0;
     while ( fgets ( card, 256, pfile ) != NULL ) {
         sscanf(card, "%s %s %s", fitsFiles[i], hdrFiles[i], outFiles[i]);
