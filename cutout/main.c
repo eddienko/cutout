@@ -316,10 +316,10 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	//
 	sx = max_array(xin, 4) - min_array(xin, 4);
 	sy = max_array(yin, 4) - min_array(yin, 4);
-	fpixel[0]=(long) (min_array(xin, 4) - sx/2);
-	fpixel[1]=(long) (min_array(yin, 4) - sy/2);
-	lpixel[0]=(long) (max_array(xin, 4) + sx/2);
-	lpixel[1]=(long) (max_array(yin, 4) + sy/2);
+	fpixel[0]=(long) (min_array(xin, 4) - sx/1);
+	fpixel[1]=(long) (min_array(yin, 4) - sy/1);
+	lpixel[0]=(long) (max_array(xin, 4) + sx/1);
+	lpixel[1]=(long) (max_array(yin, 4) + sy/1);
 	if (fpixel[0]<1) fpixel[0]=1;
 	if (fpixel[1]<1) fpixel[1]=1;
 	if (fpixel[0]>naxes_in[0]) status=1;
