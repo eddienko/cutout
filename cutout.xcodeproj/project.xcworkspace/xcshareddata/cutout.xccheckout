@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>C718A303-5FDE-4DA4-A562-BF14602953D3</string>
+	<key>IDESourceControlProjectName</key>
+	<string>cutout</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>5323787AE500C23236676EC789A1CE9EBF0BCF51</key>
+		<string>ssh://apm14:3020/cutout.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>cutout.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>5323787AE500C23236676EC789A1CE9EBF0BCF51</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://apm14:3020/cutout.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>5323787AE500C23236676EC789A1CE9EBF0BCF51</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>5323787AE500C23236676EC789A1CE9EBF0BCF51</string>
+			<key>IDESourceControlWCCName</key>
+			<string>cutout</string>
+		</dict>
+	</array>
+</dict>
+</plist>
