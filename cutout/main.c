@@ -23,7 +23,7 @@
 
 static int debug=1;
 
-int cutout(char *fitsFile, char *hdrFile, char *outFile);
+int cutout(char *fitsFile, char *fitsFileHdr, char *hdrFile, char *outFile);
 int cutout_list(char *driveFile) ;
 int copyheaders(fitsfile *infptr, fitsfile *outfptr);
 void usage();
@@ -97,14 +97,16 @@ int main (int argc, char *argv[]) {
     
     //printf(">>>>> %d\n", numberInputs);
     
-	if ((numberInputs != 1) && (numberInputs != 3)) {
+	if ((numberInputs != 1) && (numberInputs != 3) && (numberInputs != 4)) {
         usage();
 	}
     
 
     if (numberInputs == 3) {
-        cutout(argv[optind], argv[optind+1], argv[optind+2]);
-    } else {
+        cutout(argv[optind], argv[optind], argv[optind+1], argv[optind+2]);
+    } else if (numberInputs == 4) {
+        cutout(argv[optind], argv[optind+1], argv[optind+2], argv[optind+3]);
+    }else {
         cutout_list(argv[optind]);
     }
     
@@ -157,7 +159,7 @@ int cutout_list(char *driveFile) {
             id = omp_get_thread_num ( );
             #endif
             if (debug) printf("  Processor %d :  %s -> %s\n", id, fitsFiles[i], outFiles[i]);
-            cutout(fitsFiles[i], hdrFiles[i], outFiles[i]);
+            cutout(fitsFiles[i], fitsFiles[i], hdrFiles[i], outFiles[i]);
         }
     #ifdef USE_OPENMP
     
@@ -171,7 +173,7 @@ int cutout_list(char *driveFile) {
     return(0);
 }
 
-int cutout(char *fitsFile, char *hdrFile, char *outFile) {
+int cutout(char *fitsFile, char *fitsFileHdr, char *hdrFile, char *outFile) {
     int id, ii;
 	long i,j,k,l;
 	FILE *pfile;
@@ -180,7 +182,7 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
     char *fitsFileCat;
 	
 	/* CFITSIO */
-	fitsfile *infptr, *outfptr;
+	fitsfile *infptr, *infptrhdr, *outfptr;
 	char *inheader;
 	char *options;
 	int nkeys, naxis, hdutype, hdunum, status=0;
@@ -211,14 +213,20 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 		fits_report_error(stderr, status);
 		return(status);
 	};
+    
+    /* Open input file for read */
+    if (fits_open_image(&infptrhdr, fitsFileHdr, READONLY, &status)) {
+        fits_report_error(stderr, status);
+        return(status);
+    };
 	
     /* Initialize fitsChan */
 	infitschan = astFitsChan( NULL, NULL, "" );
     
     /* Read header and add only those WCS related */
-    fits_get_hdrspace(infptr, &nkeys, NULL, &status);
+    fits_get_hdrspace(infptrhdr, &nkeys, NULL, &status);
 	for (ii = 1; ii <= nkeys; ii++)  { 
-          fits_read_record(infptr, ii, card, &status); /* read keyword */
+          fits_read_record(infptrhdr, ii, card, &status); /* read keyword */
 		  if (strstr(card, "CD") != NULL)
 			  astPutFits(infitschan, card, 0);
 		  else if (strstr(card, "CR") != NULL)
@@ -388,6 +396,8 @@ int cutout(char *fitsFile, char *hdrFile, char *outFile) {
 	
 	ubnd[0]=naxes_out[0];
 	ubnd[1]=naxes_out[1];
+    
+    //printf("%d %d %d %d\n", lbnd[0], lbnd[1], ubnd[0], ubnd[1]);
 	
 	res = astResampleF(cvt, 2, lbnd_in, ubnd_in, inimg, NULL, AST__LINEAR, NULL, NULL, 0, 0, 500, AST__BAD, 2, lbnd_out, ubnd_out, lbnd, ubnd, outimg, NULL);
 	
